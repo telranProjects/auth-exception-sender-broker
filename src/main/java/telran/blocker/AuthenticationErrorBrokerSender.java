@@ -34,14 +34,18 @@ public class AuthenticationErrorBrokerSender implements AuthenticationEntryPoint
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
 		String IP = request.getRemoteAddr();
+		if(IP.contains(".")) {
+			log.debug("IP in format Ipv4: {}", IP);
+			String[] partsIp = IP.split("[.]");
+			IP = String.format("%s.%s.%s", partsIp[0], partsIp[1], partsIp[2]);
+			log.debug("get IP: {}", IP);
+		}
 		String web = request.getRemoteHost();
 		long timestamp = System.currentTimeMillis();		
 		
 		IpData ipData = new IpData(IP, web, timestamp);
 		streamBridge.send(bindingName, ipData);
 		log.debug("IP data: {} has been sent by binding name {}", ipData,bindingName);
-		log.trace("context path name : {}", request.getContextPath());
-		log.trace("path info : {}", request.getPathInfo());
 		
 		resolver.resolveException(request, response, null, authException);		
 	}
